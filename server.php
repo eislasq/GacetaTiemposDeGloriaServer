@@ -28,10 +28,10 @@ class Trayectos extends PDO {
         , 'banner');
 
     function __construct() {
-        $dsn = 'mysql:host=mysql.serversfree.com;dbname=u944467267_gacet';
         $dsn = 'mysql:host=localhost;dbname=u944467267_gacet';
-        $username = 'u944467267_gacet';
-        $passwd = 'pingpong';
+//        $dsn = 'mysql:unix_socket=/cloudsql/resolute-oxygen-95315:gaceta;dbname=Negocios';
+        $username = 'root';
+        $passwd = 'toor';
         $options = array(
             PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
         );
@@ -97,11 +97,21 @@ class Trayectos extends PDO {
         $statementUpdate->bindParam(":negocio_id", $negocio->negocio_id);
         $updated = $statementUpdate->execute();
 
-        $statement = $this->prepare("DELETE FROM sucursales
-            WHERE negocio_id=:negocio_id");
-        $statement->bindParam(':negocio_id', $negocio->negocio_id);
-        $statement->execute();
-        $this->insertarSucursales($negocio->negocio_id, $negocio->sucursales);
+        $sucursalesNoEliminadasIds = array();
+        $nuevasSucursales = array();
+        $sucursalesActualizadas = array();
+        foreach ($negocio->sucursales as $sucursal) {
+            if ($sucursal->sucursal_id) {
+                $sucursalesActualizadas[] = $sucursal;
+                $sucursalesNoEliminadasIds[] = $sucursal->sucursal_id;
+            } else {
+                $nuevasSucursales[] = $sucursal;
+            }
+        }
+        $this->depurarSucursales($negocio->negocio_id, $sucursalesNoEliminadasIds);
+        $this->actualizarSucursales($sucursalesActualizadas);
+        $this->insertarSucursales($negocio->negocio_id, $nuevasSucursales);
+
         return $updated;
     }
 
@@ -121,7 +131,7 @@ class Trayectos extends PDO {
             }
             $sucursalInsertada = $statementInsert->execute();
             echo " Sucursal $sucursal->nombre insertada: " . ($sucursalInsertada ? 'si' : 'no') . ";  ";
-            echo $statementInsert->queryString;
+            echo!$sucursalInsertada ? $statementInsert->queryString : '';
         }
     }
 
@@ -133,22 +143,25 @@ class Trayectos extends PDO {
                 $setPlaceholders[] = "$keyToInsert = :$keyToInsert";
             }
             $setPlaceholdersStr = implode(', ', $setPlaceholders);
-            $statementInsert = $this->prepare("UPDATE sucursales
+            $statementUpdate = $this->prepare("UPDATE sucursales
                     SET $setPlaceholdersStr
                     WHERE sucursal_id=:sucursal_id ");
             foreach ($keysToInsert as $keyToInsert) {
-                $statementInsert->bindParam(":$keyToInsert", $sucursal->$keyToInsert);
+                $statementUpdate->bindParam(":$keyToInsert", $sucursal->$keyToInsert);
             }
-            $statementInsert->bindParam(":sucursal_id", $sucursal->sucursal_id);
-            $sucursalInsertada = $statementInsert->execute();
-            echo " Sucursal $sucursal->nombre insertada: " . ($sucursalInsertada ? 'si' : 'no') . ";  ";
-            echo $statementInsert->queryString;
+            $statementUpdate->bindParam(":sucursal_id", $sucursal->sucursal_id);
+            $sucursalActualizada = $statementUpdate->execute();
+            echo " Sucursal $sucursal->nombre actualizada: " . ($sucursalActualizada ? 'si' : 'no') . ";  ";
+            echo!$sucursalActualizada ? $statementUpdate->queryString : '';
         }
     }
 
-    function eliminarSucursalesEliminadas($sucursalesQueQuedanIds) {
-        $statement = $this->prepare('DELETE FROM sucursales WHERE sucursal_id NOT IN(:sucursales)');
-        return $statement->execute(array(':sucursales' => $sucursalesQueQuedanIds));
+    function depurarSucursales($negocioId, $sucursalesQueQuedanIds) {
+        array_unshift($sucursalesQueQuedanIds, 0);
+        $questionMarks = implode(", ", array_pad(array(), count($sucursalesQueQuedanIds), "?"));
+        $statement = $this->prepare("DELETE FROM sucursales WHERE sucursal_id NOT IN($questionMarks) AND negocio_id=?");
+        $sucursalesQueQuedanIds[] = $negocioId;
+        return $statement->execute($sucursalesQueQuedanIds);
     }
 
     function nuevoNegocio($llave, $negocio) {
@@ -159,6 +172,7 @@ class Trayectos extends PDO {
         }
         $valuesPlaceholdersStr = implode(', ', $valuesPlaceholders);
         $columnsStr = implode(', ', $keysToInsert);
+        $this->beginTransaction();
         $statementInsert = $this->prepare("INSERT INTO negocios($columnsStr) VALUES($valuesPlaceholdersStr)");
         foreach ($keysToInsert as $keyToInsert) {
             $statementInsert->bindParam(":$keyToInsert", $negocio->$keyToInsert);
@@ -169,9 +183,22 @@ class Trayectos extends PDO {
             $this->insertarSucursales($insertedNegocioId, $negocio->sucursales);
             $statementUpdateKey = $this->prepare("UPDATE llaves SET negocio_id=:negocio_id WHERE llave=:llave");
             $keyUpdated = $statementUpdateKey->execute(array(":negocio_id" => $insertedNegocioId, ":llave" => $llave));
+            if ($keyUpdated) {
+                $this->commit();
+            }
             return $keyUpdated;
+        } else {
+            echo PHP_EOL . 'No se pudo insertar el nuevo negocio' . PHP_EOL;
+            print_r($statementInsert->errorInfo());
+            echo $statementInsert->queryString;
         }
         return false;
+    }
+
+    function obtenerCategorias() {
+        $statement = $this->prepare('SELECT * FROM categorias');
+        $statement->execute();
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
 }
@@ -190,13 +217,16 @@ switch ($action) {
     case 'guardarMiNegocio':
         $response = $t->guardarMiNegocio($request_body);
         break;
+    case 'obtenerCategorias':
+        $response = $t->obtenerCategorias();
+        break;
     default:
         break;
 }
 $output = ob_get_clean();
-if (!empty($output)) {
-    error_log(str_repeat('#', 10) . PHP_EOL . date('H:i:s') . PHP_EOL . $output
-            . PHP_EOL, 3, 'output-' . date('Y-m-d') . '.log');
-}
-echo json_encode(array('response' => $response));
+//if (!empty($output)) {
+//    error_log(str_repeat('#', 10) . PHP_EOL . date('H:i:s') . PHP_EOL . $output
+//            . PHP_EOL, 3, 'output-' . date('Y-m-d') . '.log');
+//}
+echo json_encode(array('response' => $response, 'output' => $output));
 exit();

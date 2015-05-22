@@ -8,7 +8,7 @@ CREATE TABLE categorias (
 
 CREATE TABLE negocios (
                 negocio_id INT AUTO_INCREMENT NOT NULL,
-                categoria_id INT NOT NULL,
+                categoria_id INT NULL,
                 nombre VARCHAR(512) NULL,
                 duenio VARCHAR(512) NULL,
                 descripcion LONGTEXT NULL,
