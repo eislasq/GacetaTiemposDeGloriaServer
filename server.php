@@ -1,5 +1,4 @@
 <?php
-
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -203,30 +202,42 @@ class Trayectos extends PDO {
 
 }
 
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-ob_start();
-$t = new Trayectos();
-$response = false;
-$request_body = json_decode(file_get_contents('php://input'));
-$action = $_GET['action'];
-switch ($action) {
-    case 'miNegocio':
-        $response = $t->miNegocio($request_body);
-        break;
-    case 'guardarMiNegocio':
-        $response = $t->guardarMiNegocio($request_body);
-        break;
-    case 'obtenerCategorias':
-        $response = $t->obtenerCategorias();
-        break;
-    default:
-        break;
-}
-$output = ob_get_clean();
+if (isset($_GET['action'])) {
+    header('Content-Type: application/json');
+    header('Access-Control-Allow-Origin: *');
+    ob_start();
+    $t = new Trayectos();
+    $response = false;
+    $request_body = json_decode(file_get_contents('php://input'));
+    $action = $_GET['action'];
+    switch ($action) {
+        case 'miNegocio':
+            $response = $t->miNegocio($request_body);
+            break;
+        case 'guardarMiNegocio':
+            $response = $t->guardarMiNegocio($request_body);
+            break;
+        case 'obtenerCategorias':
+            $response = $t->obtenerCategorias();
+            break;
+        default:
+            break;
+    }
+    $output = ob_get_clean();
 //if (!empty($output)) {
 //    error_log(str_repeat('#', 10) . PHP_EOL . date('H:i:s') . PHP_EOL . $output
 //            . PHP_EOL, 3, 'output-' . date('Y-m-d') . '.log');
 //}
-echo json_encode(array('response' => $response, 'output' => $output));
-exit();
+    echo json_encode(array('response' => $response, 'output' => $output));
+    exit();
+} else {
+    ?>
+    <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
+        <input type="hidden" name="cmd" value="_s-xclick">
+        <input type="hidden" name="hosted_button_id" value="TKPBHK9ABRYJG">
+        <input type="image" src="https://www.paypalobjects.com/es_XC/MX/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal, la forma más segura y rápida de pagar en línea.">
+        <img alt="" border="0" src="https://www.paypalobjects.com/es_XC/i/scr/pixel.gif" width="1" height="1">
+    </form>
+
+    <?php
+}
