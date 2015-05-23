@@ -1,6 +1,8 @@
 <?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+setlocale(LC_ALL, 'es_MX');
+date_default_timezone_set('America/Mexico_City');
 
 class Trayectos extends PDO {
 
@@ -27,10 +29,10 @@ class Trayectos extends PDO {
         , 'banner');
 
     function __construct() {
-        $dsn = 'mysql:host=localhost;dbname=u944467267_gacet';
-//        $dsn = 'mysql:unix_socket=/cloudsql/resolute-oxygen-95315:gaceta;dbname=Negocios';
+//        $dsn = 'mysql:host=localhost;dbname=u944467267_gacet';
+        $dsn = 'mysql:unix_socket=/cloudsql/resolute-oxygen-95315:gaceta;dbname=Negocios';
         $username = 'root';
-        $passwd = 'toor';
+        $passwd = '';
         $options = array(
             PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
         );
@@ -200,6 +202,24 @@ class Trayectos extends PDO {
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    function obtenerProveedoresActualizadosDespuesDe($request_body) {
+        $statement = $this->prepare('SELECT * FROM negocios WHERE fecha_actualizacion > :fecha_actualizacion');
+        $statement->bindParam(':fecha_actualizacion', $request_body->fecha);
+        $statement->execute();
+        $negocios = array();
+        while ($negocio = $statement->fetchObject()) {
+            $statementSucursales = $this->prepare("SELECT * 
+                FROM sucursales
+                WHERE negocio_id=:negocio_id");
+            $statementSucursales->bindParam(':negocio_id', $negocio->negocio_id);
+            $statementSucursales->execute();
+            $sucursales = $statementSucursales->fetchAll(PDO::FETCH_ASSOC);
+            $negocio->sucursales = $sucursales;
+            $negocios[] = $negocio;
+        }
+        return array('providers' => $negocios, 'lastUpdate' => date('Y-m-d H:i:s'));
+    }
+
 }
 
 if (isset($_GET['action'])) {
@@ -219,6 +239,9 @@ if (isset($_GET['action'])) {
             break;
         case 'obtenerCategorias':
             $response = $t->obtenerCategorias();
+            break;
+        case 'obtenerProveedoresActualizadosDespuesDe':
+            $response = $t->obtenerProveedoresActualizadosDespuesDe($request_body);
             break;
         default:
             break;
