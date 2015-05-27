@@ -1,0 +1,17 @@
+body { padding-top: 70px; }
+#overlayer-loading{
+    position: fixed;
+    background: rgba(0,0,0,0.5);
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    z-index: 99999;
+    color: white;
+    font-size: 3em;
+    display: none;
+    text-align: center;
+}
+#overlayer-loading i{
+    display: table-cell;
+    vertical-align: middle;
+}

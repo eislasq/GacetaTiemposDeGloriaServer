@@ -1,0 +1,86 @@
+<link rel="stylesheet" href="css/admin.css">
+<div ng-hide="logedIn">
+    <div class="form-group has-error" ng-show="loginError">
+        <label>Acceso denegado</label>
+    </div>
+    <div class="form-group">
+        <label for="exampleInputEmail1">Admin access</label>
+        <input type="password" class="form-control" name="admin-access" ng-model="adminPasswd" placeholder="Admin access">
+    </div>
+    <button type="submit" class="btn btn-default" ng-click="login(adminPasswd)">Entrar</button>
+</div>
+<div ng-show="logedIn">
+    <ul class="list-inline">
+        <li class="btn btn-default" ng-click="currentTab = 'categories'">Categorias</li>
+        <li class="btn btn-default" ng-click="currentTab = 'keys'">Llaves</li>
+        <li class="btn btn-warning" ng-click="logout()">Salir</li>
+    </ul>
+    <table ng-show="currentTab == 'categories'" class="table">
+        <thead>
+            <tr>
+                <th>Categoria</th>
+                <th>Controles</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="category in categories">
+                <td>
+                    <span ng-hide="category.editando">
+                        {{category.nombre}}
+                    </span>
+                    <input ng-show="category.editando" type="text" ng-model="category.nombre">
+                </td>
+                <td>
+                    <button ng-hide="category.editando" class="btn btn-primary" ng-click="category.editando = true">Modificar</button>
+                    <button ng-show="category.editando" class="btn btn-success" ng-click="updateCategory(category)">Guardar</button>
+                    <button class="btn btn-danger" ng-click="removeCategory(category)">Eliminar</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="text" ng-model="categoryName">
+                </td>
+                <td>
+                    <button class="btn btn-success" ng-click="addCategory(categoryName)">Agregar</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table  ng-show="currentTab == 'keys'" class="table">
+        <thead>
+            <tr>
+                <th>Llave</th>
+                <th>Dueño</th>
+                <th>Negocio</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="llave in llaves">
+                <td>
+                    <a href="generateKeyPng.php?text={{llave.llave}}" target="_blank">    
+                        <i class="fa fa-download"></i>
+                    </a>
+                    {{llave.llave}}
+                </td>
+                <td>{{llave.duenio}}</td>
+                <td>{{llave.nombre}}
+                    <img class="logo" src="{{llave.logo}}">
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <hr/>
+    <a ng-click="downloadAll()">
+        <i class="fa fa-download"></i>
+        Descargar Todas
+    </a>
+    <a  ng-click="downloadUnused()">
+        <i class="fa fa-download"></i>
+        Descargar Descoupadas
+    </a>
+    <br/>
+    <br/>
+    <input type="range" ng-model="cantidadAgenerar" min="1" max="100">
+    <button class="btn btn-default" ng-click="generarLlaves(cantidadAgenerar)">Generar {{cantidadAgenerar}} llaves</button>
+</div>

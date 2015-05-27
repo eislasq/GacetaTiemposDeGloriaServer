@@ -1,10 +1,11 @@
 <?php
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 setlocale(LC_ALL, 'es_MX');
 date_default_timezone_set('America/Mexico_City');
 
-class Trayectos extends PDO {
+class Servicios extends PDO {
 
     var $sucursalesColumnsEditables = array(
         'nombre'
@@ -220,31 +221,118 @@ class Trayectos extends PDO {
         return array('providers' => $negocios, 'lastUpdate' => date('Y-m-d H:i:s'));
     }
 
+    function adminAccess($request_body) {
+        session_start();
+        if ($_SESSION['admin-access'] === TRUE) {
+            return TRUE;
+        }
+        if ('f995c9f8aeeca58b6d0647ea005b4094' == md5($request_body->adminPasswd)) {
+            $_SESSION['admin-access'] = true;
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    }
+
+    function verificarLogin() {
+        session_start();
+        return $_SESSION['admin-access'] === TRUE ? TRUE : FALSE;
+    }
+
+    function adminLogout($request_body) {
+        session_start();
+        $_SESSION['admin-access'] = FALSE;
+        session_destroy();
+        return TRUE;
+    }
+
+    function neuevaCategoria($request_body) {
+        if (!$this->verificarLogin()) {
+            return false;
+        }
+        $statement = $this->prepare('INSERT INTO categorias(nombre) VALUES(:categoryName)');
+        $statement->bindParam(':categoryName', $request_body->categoryName);
+        $insertada = $statement->execute();
+        if ($insertada) {
+            $insertedId = $this->lastInsertId();
+            return array('categoria_id' => $insertedId, 'nombre' => $request_body->categoryName);
+        }
+        return FALSE;
+    }
+
+    function modificarCategoria($request_body) {
+        if (!$this->verificarLogin()) {
+            return false;
+        }
+        $statement = $this->prepare('UPDATE categorias set nombre=:categoryName WHERE categoria_id=:categoryId');
+        $statement->bindParam(':categoryId', $request_body->categoryId);
+        $statement->bindParam(':categoryName', $request_body->categoryName);
+        $actualizada = $statement->execute();
+        return $actualizada;
+    }
+
+    function eliminarCategoria($request_body) {
+        if (!$this->verificarLogin()) {
+            return false;
+        }
+        $statement = $this->prepare('DELETE FROM categorias WHERE categoria_id=:categoryId');
+        $statement->bindParam(':categoryId', $request_body->categoryId);
+        $eliminada = $statement->execute();
+        return $eliminada;
+    }
+
+    function obtenerLlaves($request_body) {
+        if (!$this->verificarLogin()) {
+            return false;
+        }
+        $statement = $this->prepare("SELECT ll.*, n.nombre, n.duenio, n.logo
+                FROM llaves ll
+                LEFT JOIN negocios n
+                ON ll.negocio_id=n.negocio_id
+                ");
+        $statement->execute();
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    function generarLlaves($request_body) {
+        if (!$this->verificarLogin()) {
+            return false;
+        }
+        require_once './luhnModN.php';
+        $luhn = new luhnModN;
+        $llavesArray = array();
+        $returnArray = array();
+        for ($i = 1; $i <= $request_body->cantidad; $i++) {
+            $llave = $luhn->getLinkString();
+            $llavesArray[] = $llave;
+            $returnArray[] = array('llave' => $llave);
+        }
+        $valuesForQuery = implode("'), ('", $llavesArray);
+
+
+        $statement = $this->prepare("
+        INSERT INTO llaves (llave)
+        VALUES ('$valuesForQuery')");
+        $insertadas = $statement->execute();
+        if ($insertadas) {
+            return $returnArray;
+        }
+        echo $statement->queryString;
+        return false;
+    }
+
 }
 
 if (isset($_GET['action'])) {
     header('Content-Type: application/json');
     header('Access-Control-Allow-Origin: *');
     ob_start();
-    $t = new Trayectos();
+    $s = new Servicios();
     $response = false;
     $request_body = json_decode(file_get_contents('php://input'));
     $action = $_GET['action'];
-    switch ($action) {
-        case 'miNegocio':
-            $response = $t->miNegocio($request_body);
-            break;
-        case 'guardarMiNegocio':
-            $response = $t->guardarMiNegocio($request_body);
-            break;
-        case 'obtenerCategorias':
-            $response = $t->obtenerCategorias();
-            break;
-        case 'obtenerProveedoresActualizadosDespuesDe':
-            $response = $t->obtenerProveedoresActualizadosDespuesDe($request_body);
-            break;
-        default:
-            break;
+    if (method_exists($s, $action)) {
+        $response = $s->$action($request_body);
     }
     $output = ob_get_clean();
 //if (!empty($output)) {
@@ -254,13 +342,5 @@ if (isset($_GET['action'])) {
     echo json_encode(array('response' => $response, 'output' => $output));
     exit();
 } else {
-    ?>
-    <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
-        <input type="hidden" name="cmd" value="_s-xclick">
-        <input type="hidden" name="hosted_button_id" value="TKPBHK9ABRYJG">
-        <input type="image" src="https://www.paypalobjects.com/es_XC/MX/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal, la forma más segura y rápida de pagar en línea.">
-        <img alt="" border="0" src="https://www.paypalobjects.com/es_XC/i/scr/pixel.gif" width="1" height="1">
-    </form>
-
-    <?php
+    include_once 'default.php';
 }
