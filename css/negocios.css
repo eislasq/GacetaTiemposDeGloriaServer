@@ -66,8 +66,10 @@ and open the template in the editor.
     display: inline-block;
     text-shadow: 0px 0px 5px black, 0px 0px 10px black, 0px 0px 15px black;
     color: white;
+    margin: 10px;
 }
 
 .descripcion-negocio pre{
     background-color: rgba(255,255,255,0.8);
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
 }
