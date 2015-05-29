@@ -1,11 +1,19 @@
-<link rel="stylesheet" href="css/negocios.css">
+<link rel="stylesheet" href="css/negocios.css?v=2">
 <div class="row">
 
-    <div class="col-md-4 negocio" ng-repeat="negocio in negocios">
+    <div class="col-md-4 negocio" ng-repeat="negocio in negocios" >
         <div class="descripcion-negocio" style="background-image: url('{{negocio.banner}}');">
             <img class="logo" src="{{negocio.logo}}">
             <h2 class="nombre">{{negocio.nombre}}</h2>
-            <p>{{negocio.descripcion}}</p>
+            <pre>{{negocio.descripcion}}</pre>
+            <pre ng-repeat="sucursal in negocio.sucursales">
+<h3>Sucursal {{sucursal.nombre}}</h3>
+Calle {{sucursal.calle}} #{{sucursal.numeroext}} {{sucursal.numeroint}}, {{sucursal.colonia}}
+ {{sucursal.localidad}}, {{sucursal.municipio}} {{sucursal.estado}}
+
+ Teléfonos: {{sucursal.telefonos}}
+ Celulares: {{sucursal.telefonos}}
+            </pre>
         </div>
     </div>
 </div>

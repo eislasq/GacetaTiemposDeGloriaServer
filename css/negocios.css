@@ -11,7 +11,6 @@ and open the template in the editor.
 .negocio{
     /* border: solid 1px #0c63ee; */
     height: 300px;
-    overflow: hidden;
     /* margin: 10px; */
     /* box-shadow: 0px 0px 3px 0px inset; */
     padding: 10px;
@@ -41,12 +40,23 @@ and open the template in the editor.
 }
 
 .descripcion-negocio{
-    opacity: 0.8;
     background-size: 100% auto;
     background-repeat: no-repeat;
     background-position: 0 50%;
     width: 100%;
     height: 100%;
+    overflow: hidden;
+    transition: 1s all;
+    -webkit-transition: 1s all;
+}
+.descripcion-negocio:hover{
+    /* overflow: visible; */
+    z-index: 999;
+    position: absolute;
+    /*height: auto;*/
+    overflow: auto;
+    opacity: 1;
+    box-shadow: 0px 0px 300px 200px white;
 }
 
 .descripcion-negocio .logo{
@@ -54,4 +64,10 @@ and open the template in the editor.
 }
 .descripcion-negocio .nombre{
     display: inline-block;
+    text-shadow: 0px 0px 5px black, 0px 0px 10px black, 0px 0px 15px black;
+    color: white;
+}
+
+.descripcion-negocio pre{
+    background-color: rgba(255,255,255,0.8);
 }

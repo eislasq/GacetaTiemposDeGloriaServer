@@ -18,6 +18,5 @@ angular.module('Negocios')
 //                        console.log(result);
                         alert(':( Algo anda mal con la conección.' + result.statusText);
                     });
-
         })
         ;

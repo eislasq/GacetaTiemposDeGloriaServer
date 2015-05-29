@@ -38,7 +38,7 @@
                 <ul class="nav navbar-nav">
                     <li><a href="#/mi-negocio/">Mi negocio</a></li>
                     <li><a href="#/admin/">Admin</a></li>
-                    <li><a href="#/about/">Terminos de uso</a></li>
+                    <li><a href="#/terms-of-use/">Terminos de uso</a></li>
                     <li><a href="#/about/">Acerca de</a></li>
                     <!------>
                     <li><a href="https://play.google.com/store/apps/details?id=com.IslasCruz.GacetaTiemposDeGloria" target="_blank">

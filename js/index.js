@@ -4,11 +4,14 @@ angular.module('Negocios', ['ngRoute'])
                     .when(
                             '/'
                             , {templateUrl: 'templates/negocios.html'
-                             , controller: 'NegociosCtrl'})
+                                , controller: 'NegociosCtrl'})
                     .when(
                             '/mi-negocio'
                             , {templateUrl: 'templates/mi-negocio.html'
                                 , controller: 'MiNegocioCtrl'})
+                    .when(
+                            '/terms-of-use'
+                            , {templateUrl: 'templates/terms-of-use.html'})
                     .when(
                             '/about'
                             , {templateUrl: 'templates/about.html'
